@@ -14,7 +14,9 @@ canvas { display:block; }
 <script>
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
-
+const bgm = new Audio("99477_Every_End....mp3")
+bgm.loop = true
+bgm.volume = 0.4
 c.width = window.innerWidth;
 c.height = window.innerHeight;
 
@@ -248,6 +250,8 @@ function reset(){
     player=new Player();
     boss=new Boss();
     arena={x:0,y:0,w:c.width,h:c.height};
+    bgm.pause();
+    bgm.currentTime = 0;
 }
 
 // ===== LOOP =====
@@ -270,8 +274,21 @@ function loop(){
         ctx.font="30px Arial";
         ctx.fillText("PRESS 1 NORMAL / 2 HARDCORE 😈",c.width/2-280,c.height/2);
 
-        if(keys["1"]){ started=true; hardcore=false; }
-        if(keys["2"]){ started=true; hardcore=true; }
+    if(keys["1"]){
+        started = true;
+        hardcore = false;
+
+        bgm.currentTime = 0;
+        bgm.play();
+    }
+
+    if(keys["2"]){
+        started = true;
+        hardcore = true;
+
+        bgm.currentTime = 0;
+        bgm.play();
+    }
 
         ctx.restore();
         requestAnimationFrame(loop);
