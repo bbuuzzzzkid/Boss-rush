@@ -2,10 +2,10 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>FULL BOSS RUSH 😈🔥</title>
+<title>Rogue Boss Rush 😈🎲</title>
 <style>
-  body { margin:0; overflow:hidden; background:#050514; }
-  canvas { display:block; }
+body { margin:0; overflow:hidden; background:#060610; }
+canvas { display:block; }
 </style>
 </head>
 <body>
@@ -19,12 +19,21 @@ c.width = window.innerWidth;
 c.height = window.innerHeight;
 
 let keys = {};
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
+document.addEventListener("keydown", e=>keys[e.key]=true);
+document.addEventListener("keyup", e=>keys[e.key]=false);
 
-const GRAVITY = 0.75;
+const GRAVITY = 0.8;
 
 let bullets = [];
+
+let gameTime = 0; // 🎲 10 minute run = ~600 seconds @ 60fps
+let bossIndex = 0;
+
+const bossOrder = shuffle([1,2,3,4,5]);
+
+function shuffle(arr){
+  return arr.sort(()=>Math.random()-0.5);
+}
 
 class Player {
   constructor(){
@@ -60,7 +69,7 @@ class Player {
   }
 
   draw(){
-    ctx.font = "30px Arial";
+    ctx.font="30px Arial";
     ctx.fillText("🧍‍♂️", this.x, this.y);
   }
 }
@@ -77,139 +86,108 @@ class Bullet {
   }
 
   draw(){
-    ctx.font="18px Arial";
+    ctx.font="16px Arial";
     ctx.fillText("🔴", this.x, this.y);
   }
 }
 
 class Boss {
-  constructor(level){
-    this.level = level;
+  constructor(type){
+    this.type = type;
     this.x = c.width/2;
     this.y = 120;
-    this.hp = 90 * level * level;
+    this.hp = 2000 + type*1500;
     this.t = 0;
+    this.phase = 1;
   }
 
   update(player){
     this.t++;
 
-    // 🧠 smart tracking
-    this.x += (player.x - this.x) * (0.012 * this.level);
+    // 🧠 tracking movement
+    this.x += (player.x - this.x) * 0.015;
 
-    const speed = Math.max(60 - this.level*8, 18);
+    if(this.hp < 0) return;
 
-    // 👾 Level 1: simple aim
-    if(this.level === 1 && this.t % speed === 0){
-      this.shoot(player, 5);
-    }
+    // 🔥 phase system (THIS is what makes it roguelike-feeling)
+    if(this.hp < 0.6*this.maxHp) this.phase = 2;
+    if(this.hp < 0.3*this.maxHp) this.phase = 3;
 
-    // 👹 Level 2: prediction
-    if(this.level === 2 && this.t % 35 === 0){
-      this.predict(player, 6);
-    }
+    let rate = 60 - this.type*5;
 
-    // 🧟 Level 3: spread chaos
-    if(this.level === 3 && this.t % 30 === 0){
-      this.spread(player);
-    }
+    if(this.phase === 2) rate *= 0.7;
+    if(this.phase === 3) rate *= 0.5;
 
-    // 🐉 Level 4: ring + scaling
-    if(this.level === 4 && this.t % 22 === 0){
-      this.ring(10 + Math.floor(this.t/200));
-    }
-
-    // 💀 Level 5: full chaos AI
-    if(this.level === 5){
-      if(this.t % 16 === 0) this.predict(player, 7);
-      if(this.t % 35 === 0) this.ring(14);
-      if(Math.random() < 0.03) this.burst();
-      if(this.t % 180 === 0) this.teleport();
+    if(this.t % Math.max(rate,12) === 0){
+      this.attack(player);
     }
   }
 
-  shoot(player, speed){
+  attack(player){
     let dx = player.x - this.x;
     let dy = player.y - this.y;
     let m = Math.hypot(dx,dy);
-    bullets.push(new Bullet(this.x,this.y,dx/m*speed,dy/m*speed));
-  }
 
-  predict(player, speed){
-    let px = player.x + player.vx*20;
-    let py = player.y + player.vy*15;
+    let speed = 5 + this.phase;
 
-    let dx = px - this.x;
-    let dy = py - this.y;
-    let m = Math.hypot(dx,dy);
-
-    bullets.push(new Bullet(this.x,this.y,dx/m*speed,dy/m*speed));
-  }
-
-  spread(player){
-    for(let i=-2;i<=2;i++){
-      let dx = player.x - this.x;
-      let dy = player.y - this.y;
-      let a = Math.atan2(dy,dx) + i*0.25;
-
-      bullets.push(new Bullet(
-        this.x,this.y,
-        Math.cos(a)*5,
-        Math.sin(a)*5
-      ));
+    // 🎲 different boss styles per run
+    if(this.type === 1){
+      bullets.push(new Bullet(this.x,this.y,dx/m*speed,dy/m*speed));
     }
-  }
 
-  ring(count){
-    for(let i=0;i<count;i++){
-      let a = (Math.PI*2*i)/count + this.t*0.02;
-      bullets.push(new Bullet(
-        this.x,this.y,
-        Math.cos(a)*7,
-        Math.sin(a)*7
-      ));
+    if(this.type === 2){
+      for(let i=-1;i<=1;i++){
+        bullets.push(new Bullet(this.x,this.y,dx/m*speed + i,dy/m*speed));
+      }
     }
-  }
 
-  burst(){
-    for(let i=0;i<12;i++){
+    if(this.type === 3){
       let a = Math.random()*Math.PI*2;
-      bullets.push(new Bullet(
-        this.x,this.y,
-        Math.cos(a)*8,
-        Math.sin(a)*8
-      ));
+      bullets.push(new Bullet(this.x,this.y,Math.cos(a)*6,Math.sin(a)*6));
     }
-  }
 
-  teleport(){
-    this.x = Math.random()*c.width;
+    if(this.type === 4){
+      for(let i=0;i<8;i++){
+        let a = i*Math.PI/4 + this.t*0.02;
+        bullets.push(new Bullet(this.x,this.y,Math.cos(a)*7,Math.sin(a)*7));
+      }
+    }
+
+    if(this.type === 5){
+      for(let i=0;i<12;i++){
+        let a = i*Math.PI/6 + this.t*0.03;
+        bullets.push(new Bullet(this.x,this.y,Math.cos(a)*8,Math.sin(a)*8));
+      }
+    }
   }
 
   draw(){
     let icons = ["👾","👹","🧟","🐉","💀"];
     ctx.font="38px Arial";
-    ctx.fillText(icons[this.level-1], this.x, this.y);
+    ctx.fillText(icons[this.type-1], this.x, this.y);
   }
 }
 
 let player = new Player();
-let boss = new Boss(1);
+let boss = new Boss(bossOrder[bossIndex]);
 
 function hit(a,b){
   return Math.abs(a.x-b.x)<25 && Math.abs(a.y-b.y)<25;
 }
 
 function nextBoss(){
-  if(boss.level < 5){
-    boss = new Boss(boss.level+1);
-  } else {
-    alert("YOU BEAT ALL 5 BOSSES 😱🔥 LEGEND");
+  bossIndex++;
+  if(bossIndex >= bossOrder.length){
+    alert("RUN COMPLETE 😈🎲 (you survived the roguelike)");
     location.reload();
+  } else {
+    boss = new Boss(bossOrder[bossIndex]);
   }
 }
 
 function loop(){
+  gameTime++;
+
   ctx.clearRect(0,0,c.width,c.height);
 
   player.update();
@@ -218,25 +196,40 @@ function loop(){
   boss.update(player);
   boss.draw();
 
-  bullets.forEach((b,i)=>{
+  // 🔴 SAFE BULLET SYSTEM (fixes your bug)
+  bullets.forEach(b=>{
     b.update();
     b.draw();
+  });
 
+  bullets = bullets.filter(b =>
+    b.x > -100 && b.x < c.width+100 &&
+    b.y > -100 && b.y < c.height+100
+  );
+
+  // collisions
+  bullets.forEach((b,i)=>{
     if(hit(player,b)){
       player.hp -= 10;
       bullets.splice(i,1);
     }
-
-    if(hit(boss,b)){
-      boss.hp -= 10;
-      bullets.splice(i,1);
-    }
   });
 
-  if(boss.hp <= 0) nextBoss();
+  if(hit(player,boss)){
+    player.hp -= 0.2;
+  }
+
+  if(boss.hp <= 0){
+    nextBoss();
+  }
 
   if(player.hp <= 0){
-    alert("YOU DIED 💀🔥");
+    alert("ROGUE RUN FAILED 💀");
+    location.reload();
+  }
+
+  if(gameTime > 60*60*10){
+    alert("10 MIN SURVIVED 😈🔥 LEGEND");
     location.reload();
   }
 
