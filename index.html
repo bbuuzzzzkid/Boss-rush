@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>FULL BOSS RUSH 😈🔥</title>
+<style>
+  body { margin:0; overflow:hidden; background:#050514; }
+  canvas { display:block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<script>
+const c = document.getElementById("c");
+const ctx = c.getContext("2d");
+
+c.width = window.innerWidth;
+c.height = window.innerHeight;
+
+let keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+const GRAVITY = 0.75;
+
+let bullets = [];
+
+class Player {
+  constructor(){
+    this.x = 120;
+    this.y = 200;
+    this.vx = 0;
+    this.vy = 0;
+    this.onGround = false;
+    this.hp = 100;
+  }
+
+  update(){
+    this.vx = 0;
+
+    if(keys["ArrowLeft"]) this.vx = -6;
+    if(keys["ArrowRight"]) this.vx = 6;
+
+    if(keys[" "] && this.onGround){
+      this.vy = -15;
+      this.onGround = false;
+    }
+
+    this.vy += GRAVITY;
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    if(this.y > c.height - 90){
+      this.y = c.height - 90;
+      this.vy = 0;
+      this.onGround = true;
+    }
+  }
+
+  draw(){
+    ctx.font = "30px Arial";
+    ctx.fillText("🧍‍♂️", this.x, this.y);
+  }
+}
+
+class Bullet {
+  constructor(x,y,vx,vy){
+    this.x=x; this.y=y;
+    this.vx=vx; this.vy=vy;
+  }
+
+  update(){
+    this.x += this.vx;
+    this.y += this.vy;
+  }
+
+  draw(){
+    ctx.font="18px Arial";
+    ctx.fillText("🔴", this.x, this.y);
+  }
+}
+
+class Boss {
+  constructor(level){
+    this.level = level;
+    this.x = c.width/2;
+    this.y = 120;
+    this.hp = 90 * level * level;
+    this.t = 0;
+  }
+
+  update(player){
+    this.t++;
+
+    // 🧠 smart tracking
+    this.x += (player.x - this.x) * (0.012 * this.level);
+
+    const speed = Math.max(60 - this.level*8, 18);
+
+    // 👾 Level 1: simple aim
+    if(this.level === 1 && this.t % speed === 0){
+      this.shoot(player, 5);
+    }
+
+    // 👹 Level 2: prediction
+    if(this.level === 2 && this.t % 35 === 0){
+      this.predict(player, 6);
+    }
+
+    // 🧟 Level 3: spread chaos
+    if(this.level === 3 && this.t % 30 === 0){
+      this.spread(player);
+    }
+
+    // 🐉 Level 4: ring + scaling
+    if(this.level === 4 && this.t % 22 === 0){
+      this.ring(10 + Math.floor(this.t/200));
+    }
+
+    // 💀 Level 5: full chaos AI
+    if(this.level === 5){
+      if(this.t % 16 === 0) this.predict(player, 7);
+      if(this.t % 35 === 0) this.ring(14);
+      if(Math.random() < 0.03) this.burst();
+      if(this.t % 180 === 0) this.teleport();
+    }
+  }
+
+  shoot(player, speed){
+    let dx = player.x - this.x;
+    let dy = player.y - this.y;
+    let m = Math.hypot(dx,dy);
+    bullets.push(new Bullet(this.x,this.y,dx/m*speed,dy/m*speed));
+  }
+
+  predict(player, speed){
+    let px = player.x + player.vx*20;
+    let py = player.y + player.vy*15;
+
+    let dx = px - this.x;
+    let dy = py - this.y;
+    let m = Math.hypot(dx,dy);
+
+    bullets.push(new Bullet(this.x,this.y,dx/m*speed,dy/m*speed));
+  }
+
+  spread(player){
+    for(let i=-2;i<=2;i++){
+      let dx = player.x - this.x;
+      let dy = player.y - this.y;
+      let a = Math.atan2(dy,dx) + i*0.25;
+
+      bullets.push(new Bullet(
+        this.x,this.y,
+        Math.cos(a)*5,
+        Math.sin(a)*5
+      ));
+    }
+  }
+
+  ring(count){
+    for(let i=0;i<count;i++){
+      let a = (Math.PI*2*i)/count + this.t*0.02;
+      bullets.push(new Bullet(
+        this.x,this.y,
+        Math.cos(a)*7,
+        Math.sin(a)*7
+      ));
+    }
+  }
+
+  burst(){
+    for(let i=0;i<12;i++){
+      let a = Math.random()*Math.PI*2;
+      bullets.push(new Bullet(
+        this.x,this.y,
+        Math.cos(a)*8,
+        Math.sin(a)*8
+      ));
+    }
+  }
+
+  teleport(){
+    this.x = Math.random()*c.width;
+  }
+
+  draw(){
+    let icons = ["👾","👹","🧟","🐉","💀"];
+    ctx.font="38px Arial";
+    ctx.fillText(icons[this.level-1], this.x, this.y);
+  }
+}
+
+let player = new Player();
+let boss = new Boss(1);
+
+function hit(a,b){
+  return Math.abs(a.x-b.x)<25 && Math.abs(a.y-b.y)<25;
+}
+
+function nextBoss(){
+  if(boss.level < 5){
+    boss = new Boss(boss.level+1);
+  } else {
+    alert("YOU BEAT ALL 5 BOSSES 😱🔥 LEGEND");
+    location.reload();
+  }
+}
+
+function loop(){
+  ctx.clearRect(0,0,c.width,c.height);
+
+  player.update();
+  player.draw();
+
+  boss.update(player);
+  boss.draw();
+
+  bullets.forEach((b,i)=>{
+    b.update();
+    b.draw();
+
+    if(hit(player,b)){
+      player.hp -= 10;
+      bullets.splice(i,1);
+    }
+
+    if(hit(boss,b)){
+      boss.hp -= 10;
+      bullets.splice(i,1);
+    }
+  });
+
+  if(boss.hp <= 0) nextBoss();
+
+  if(player.hp <= 0){
+    alert("YOU DIED 💀🔥");
+    location.reload();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
