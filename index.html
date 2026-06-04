@@ -48,10 +48,10 @@ class Player {
     }
 
     update(){
-        if(keys["ArrowLeft"]) this.x -= 6;
-        if(keys["ArrowRight"]) this.x += 6;
-        if(keys["ArrowUp"]) this.y -= 6;
-        if(keys["ArrowDown"]) this.y += 6;
+        if(keys["ArrowLeft"]) this.x -= 6.1;
+        if(keys["ArrowRight"]) this.x += 6.1;
+        if(keys["ArrowUp"]) this.y -= 6.1;
+        if(keys["ArrowDown"]) this.y += 6.1;
 
         this.x = Math.max(arena.x, Math.min(arena.x+arena.w, this.x));
         this.y = Math.max(arena.y, Math.min(arena.y+arena.h, this.y));
