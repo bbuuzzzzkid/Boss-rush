@@ -15,6 +15,7 @@ canvas { display:block; }
 const c = document.getElementById("c");
 const ctx = c.getContext("2d");
 const bgm = new Audio("99477_Every_End....mp3")
+let won = false
 bgm.loop = true
 bgm.volume = 0.4
 c.width = window.innerWidth;
@@ -22,7 +23,16 @@ c.height = window.innerHeight;
 
 // ===== INPUT =====
 let keys = {};
-document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keydown", e => {
+
+    keys[e.key] = true;
+
+    if(won && (e.key === "r" || e.key === "R")){
+        won = false;
+        reset();
+    }
+
+});
 document.addEventListener("keyup", e => keys[e.key] = false);
 
 // ===== GAME STATE =====
@@ -126,6 +136,11 @@ class Boss {
     update(){
         this.t++;
         time++;
+
+        if(time >= 60 * 7 * 60){
+            won = true;
+            return;
+            }
 
         this.x += (player.x-this.x)*0.03;
 
@@ -240,6 +255,7 @@ function kill(){
 function reset(){
     started=false;
     time=0;
+    won = false;
     bullets=[];
     player=new Player();
     boss=new Boss();
@@ -251,6 +267,39 @@ function reset(){
 // ===== LOOP =====
 function loop(){
     ctx.clearRect(0,0,c.width,c.height);
+
+    // win screen
+
+    if(won){
+
+    ctx.fillStyle = "rgba(0,0,0,0.9)";
+    ctx.fillRect(0,0,c.width,c.height);
+
+    ctx.textAlign = "center";
+
+    ctx.fillStyle = "gold";
+    ctx.font = "bold 80px Arial";
+    ctx.fillText("BULLET RUSH CLEARED", c.width/2, c.height/2 - 40);
+
+    ctx.fillStyle = "white";
+    ctx.font = "28px Arial";
+    ctx.fillText(
+        "Final Time: " + (time/60).toFixed(1) + "s",
+        c.width/2,
+        c.height/2 + 30
+    );
+
+    ctx.fillStyle = "#aaaaaa";
+    ctx.font = "20px Arial";
+    ctx.fillText(
+        "Press R to return to menu",
+        c.width/2,
+        c.height/2 + 80
+    );
+
+    requestAnimationFrame(loop);
+    return;
+}
 
     // timer
     ctx.fillStyle = "white";
