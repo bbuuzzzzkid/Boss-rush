@@ -269,10 +269,38 @@ function loop(){
     ctx.translate(ox,oy);
 
     if(!started){
-        ctx.fillStyle="white";
-        ctx.font="30px Arial";
-        ctx.fillText("PRESS 1 NORMAL / 2 HARDCORE 😈",c.width/2-280,c.height/2);
+    ctx.save();
 
+    // background vibe (slight dim so menu feels separate)
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.fillRect(0,0,c.width,c.height);
+
+    ctx.textAlign = "center";
+
+    // ===== TITLE =====
+    ctx.fillStyle = "white";
+    ctx.font = "bold 60px Arial";
+    ctx.fillText("Bullet Rush:", c.width/2, c.height/2 - 120);
+
+    // bold SURVIVE part
+    ctx.font = "bold 70px Arial";
+    ctx.fillStyle = "red";
+    ctx.fillText("SURVIVE", c.width/2, c.height/2 - 50);
+
+    // ===== OPTIONS =====
+    ctx.fillStyle = "white";
+    ctx.font = "24px Arial";
+    ctx.fillText("PRESS 1 FOR NORMAL", c.width/2, c.height/2 + 40);
+    ctx.fillText("PRESS 2 FOR HARDCORE 😈", c.width/2, c.height/2 + 80);
+
+    // small hint text
+    ctx.fillStyle = "#aaaaaa";
+    ctx.font = "16px Arial";
+    ctx.fillText("dodge bullets. survive the chaos.", c.width/2, c.height/2 + 140);
+
+    ctx.restore();
+
+    // ===== INPUT HANDLING =====
     if(keys["1"]){
         started = true;
         hardcore = false;
@@ -289,10 +317,9 @@ function loop(){
         bgm.play();
     }
 
-        ctx.restore();
-        requestAnimationFrame(loop);
-        return;
-    }
+    requestAnimationFrame(loop);
+    return;
+}
 
     player.update();
     player.draw();
