@@ -140,13 +140,13 @@ class Boss {
 
         // laser
         if(this.t%300===0){
-            this.laserTimer=120;
+            this.laserTimer=180;
             this.laserX=player.x;
         }
 
         if(this.laserTimer>0){
             this.laserTimer--;
-            if(this.laserTimer<60){
+            if(this.laserTimer<120){
                 if(Math.abs(player.x-this.laserX)<40){
                     kill();
                 }
