@@ -381,7 +381,7 @@ function loop(){
     boss.draw();
 
     ctx.strokeStyle="red";
-    ctx.strokeRect(arena.x,arena.y,arena.w,arena.h);
+    ctx.strokeRect(0, 0, c.width, c.height);
 
     for(let b of bullets){
         b.update();
